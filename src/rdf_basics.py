@@ -1,3 +1,7 @@
+"""
+Learning reference: demonstrates manual RDF triple creation using RDFLib.
+Shows subject, predicate, object structure before introducing Turtle files.
+"""
 from rdflib import Graph, Namespace, Literal
 
 # A namespace is a base URI — a shared prefix for all our resources.

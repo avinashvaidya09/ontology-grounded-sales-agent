@@ -22,6 +22,9 @@ pip install -r requirements.txt
 ```bash
 # Load the graph and print all triples
 python3 src/load_graph.py
+
+# Run SPARQL queries across all orders
+python3 src/query_graph.py
 ```
 
 ## Project structure
@@ -61,18 +64,12 @@ SalesOrderItem --references--->  Material
 Material       --suppliedBy--->  Supplier
 ```
 
-**Instance data** — the specific business records:
+**Instance data** — the specific business records (3 orders, 2 customers, 2 suppliers):
 
 ```
-ACME  --places------->  SO100
-SO100 --contains------>  SO100_ITEM10
-SO100 --fulfilledBy--->  DEL800
-DEL800 --fulfills----->  SO100_ITEM10
-SO100_ITEM10 --references--> MAT100
-MAT100 --suppliedBy--->  SUP300
-
-SO100  status: DELAYED
-MAT100 availabilityStatus: OUT_OF_STOCK
+ACME   --places-->  SO100  (status: DELAYED,    material: MAT100, availability: OUT_OF_STOCK, supplier: SUP300)
+ACME   --places-->  SO102  (status: PENDING,    material: MAT102, availability: LOW_STOCK,    supplier: SUP300)
+GLOBEX --places-->  SO101  (status: CONFIRMED,  material: MAT101, availability: IN_STOCK,     supplier: SUP301)
 ```
 
 ## Stages
@@ -81,7 +78,7 @@ MAT100 availabilityStatus: OUT_OF_STOCK
 - Stage 1 — RDF fundamentals ✓
 - Stage 2 — Business ontology ✓
 - Stage 3 — Instance data ✓
-- Stage 4 — SPARQL queries ← next
-- Stage 5 — Python + SPARQL
-- Stage 6 — LLM-powered agent
+- Stage 4 — SPARQL queries ✓
+- Stage 5 — Python + SPARQL ✓
+- Stage 6 — LLM-powered agent ← next
 - Stage 7 — Architecture comparison
