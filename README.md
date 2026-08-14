@@ -82,3 +82,73 @@ GLOBEX --places-->  SO101  (status: CONFIRMED,  material: MAT101, availability: 
 - Stage 5 — Python + SPARQL ✓
 - Stage 6 — LLM-powered agent ← next
 - Stage 7 — Architecture comparison
+
+---
+
+## Agent architecture (Stage 6)
+
+Two agents are implemented in `src/agent.py`, using SAP AI Core via the Gen AI Hub SDK.
+
+### Agent A — Tool-based (restrictive)
+
+The LLM is given a fixed set of Python functions as tools. It cannot go outside them.
+
+```
+User question
+      ↓
+LLM + tool descriptions (function names + docstrings)
+      ↓
+LLM selects a tool: get_order_details("SO100")
+      ↓
+Python executes the SPARQL (query_graph.py)
+      ↓
+LLM formats the result as a natural language answer
+```
+
+- Schema knowledge is encoded in tool descriptions, not raw RDF
+- Equivalent to an MCP/function-calling agent
+- Safe: hallucinated property names are impossible — the SPARQL is pre-written
+
+### Agent B — SPARQL-generating (flexible)
+
+The LLM receives the ontology schema and generates SPARQL directly.
+
+```
+User question
+      ↓
+LLM + ontology schema (Turtle schema section in system prompt)
+      ↓
+LLM generates a SPARQL query
+      ↓
+Python executes it via g.query()
+      ↓
+LLM formats the result as a natural language answer
+```
+
+- Can answer questions not anticipated by pre-built functions
+- LLM must know exact property names and traversal direction from the schema
+- Risk: invalid SPARQL if the LLM misreads the schema
+
+### Context provided to the LLM
+
+| Agent | What the LLM sees |
+|---|---|
+| Agent A | Tool names, parameter names, and docstrings — schema is implicit |
+| Agent B | The schema section of `sales_ontology.ttl` pasted into the system prompt |
+
+### In the real world (SAP HANA Cloud KG, enterprise)
+
+Large enterprise ontologies have thousands of classes — the full schema does not fit in a prompt.
+Common approaches:
+
+| Approach | How it works | When to use |
+|---|---|---|
+| Static schema in system prompt | Full schema pasted in | Small ontologies (like this project) |
+| Schema summarisation | Pre-generate a compact natural-language description of the ontology | Medium ontologies |
+| Schema retrieval | Embed schema fragments, retrieve relevant ones per query (RAG-like) | Large ontologies |
+| Few-shot SPARQL examples | Include 3–5 example question/query pairs so the LLM learns the patterns | Any size, improves accuracy |
+
+In SAP HANA Cloud KG, data from S/4HANA (via OData/BAPI) is extracted, mapped to RDF triples
+by an ETL pipeline, and loaded into the graph store. The SPARQL endpoint is then exposed to agents.
+The ontology schema acts as the grounding layer — the agent reasons over named semantic relationships
+rather than guessing from column names or API descriptions.
