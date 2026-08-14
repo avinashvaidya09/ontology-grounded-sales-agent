@@ -1,0 +1,91 @@
+@prefix rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix sales: <http://example.org/sales/> .
+
+# ─────────────────────────────────────────────
+# ONTOLOGY — class and property definitions
+# (equivalent to CREATE TABLE / schema layer)
+# ─────────────────────────────────────────────
+
+sales:Customer       rdf:type rdfs:Class ;
+                     rdfs:label "Customer" .
+
+sales:SalesOrder     rdf:type rdfs:Class ;
+                     rdfs:label "Sales Order" .
+
+sales:SalesOrderItem rdf:type rdfs:Class ;
+                     rdfs:label "Sales Order Item" .
+
+sales:Delivery       rdf:type rdfs:Class ;
+                     rdfs:label "Delivery" .
+
+sales:Material       rdf:type rdfs:Class ;
+                     rdfs:label "Material" .
+
+sales:Supplier       rdf:type rdfs:Class ;
+                     rdfs:label "Supplier" .
+
+# Object properties — link one resource to another resource
+
+sales:places         rdf:type    rdf:Property ;
+                     rdfs:domain sales:Customer ;
+                     rdfs:range  sales:SalesOrder .
+
+sales:contains       rdf:type    rdf:Property ;
+                     rdfs:domain sales:SalesOrder ;
+                     rdfs:range  sales:SalesOrderItem .
+
+sales:fulfilledBy    rdf:type    rdf:Property ;
+                     rdfs:domain sales:SalesOrder ;
+                     rdfs:range  sales:Delivery .
+
+sales:fulfills       rdf:type    rdf:Property ;
+                     rdfs:domain sales:Delivery ;
+                     rdfs:range  sales:SalesOrderItem .
+
+sales:references     rdf:type    rdf:Property ;
+                     rdfs:domain sales:SalesOrderItem ;
+                     rdfs:range  sales:Material .
+
+sales:suppliedBy     rdf:type    rdf:Property ;
+                     rdfs:domain sales:Material ;
+                     rdfs:range  sales:Supplier .
+
+# Datatype properties — link a resource to a plain value (Literal)
+
+sales:status             rdf:type    rdf:Property ;
+                         rdfs:domain sales:SalesOrder .
+
+sales:availabilityStatus rdf:type    rdf:Property ;
+                         rdfs:domain sales:Material .
+
+# ─────────────────────────────────────────────
+# INSTANCE DATA — specific business records
+# (equivalent to INSERT INTO rows)
+# ─────────────────────────────────────────────
+
+sales:ACME          rdf:type         sales:Customer ;
+                    rdfs:label       "ACME Corp" .
+
+sales:SO100         rdf:type         sales:SalesOrder ;
+                    rdfs:label       "Sales Order 100" ;
+                    sales:status     "DELAYED" .
+
+sales:SO100_ITEM10  rdf:type         sales:SalesOrderItem .
+
+sales:DEL800        rdf:type         sales:Delivery .
+
+sales:MAT100        rdf:type         sales:Material ;
+                    sales:availabilityStatus "OUT_OF_STOCK" .
+
+sales:SUP300        rdf:type         sales:Supplier ;
+                    rdfs:label       "Supplier 300" .
+
+# Relationships between instances
+
+sales:ACME          sales:places      sales:SO100 .
+sales:SO100         sales:contains    sales:SO100_ITEM10 .
+sales:SO100         sales:fulfilledBy sales:DEL800 .
+sales:DEL800        sales:fulfills    sales:SO100_ITEM10 .
+sales:SO100_ITEM10  sales:references  sales:MAT100 .
+sales:MAT100        sales:suppliedBy  sales:SUP300 .

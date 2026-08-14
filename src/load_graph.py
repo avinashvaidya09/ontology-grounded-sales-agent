@@ -1,7 +1,7 @@
 from rdflib import Graph
 
 g = Graph()
-g.parse("data/rdf_basics.ttl", format="turtle")
+g.parse("data/sales_ontology.ttl", format="turtle")
 
 print(f"Loaded {len(g)} triples\n")
 
