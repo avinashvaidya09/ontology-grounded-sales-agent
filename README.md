@@ -34,17 +34,18 @@ pip install -r requirements.txt
 ## Run
 
 ```bash
-# Load the graph and print all triples
-python3 -m src.load_graph
-
 # Run SPARQL queries across all orders
-python3 -m src.query_graph
+python3 -m src.kg.query_graph
 
-# Run Agent A (tool-based)
-python3 -m src.agent_a
+# Run Agent A (tool-based) — CLI demo
+python3 -m src.agents.agent_a
+
+# Start the chat UI (FastAPI + uvicorn)
+python3 -m uvicorn src.app:app --reload --port 5000
+# Then open http://localhost:5000
 
 # Run Agent B (SPARQL-generating) — coming soon
-python3 -m src.agent_b
+python3 -m src.agents.agent_b
 ```
 
 ## Project structure
@@ -60,12 +61,19 @@ ontology-grounded-sales-agent/
 │   └── sales_ontology.ttl    # Business ontology (schema + instance data)
 │
 ├── src/
+│   ├── kg/
+│   │   ├── load_graph.py     # Loads sales_ontology.ttl into an RDFLib graph
+│   │   └── query_graph.py    # SPARQL query functions
+│   ├── agents/
+│   │   ├── agent_a.py        # Agent A: tool-based (restrictive)
+│   │   └── agent_b.py        # Agent B: SPARQL-generating (flexible)
+│   ├── llm/
+│   │   ├── ai_core.py        # AI Core credentials + LLM initialisation
+│   │   └── llm_config.py     # System prompt constants for all agents
+│   ├── templates/
+│   │   └── index.html        # Chat UI (HTML + CSS + JS)
 │   ├── rdf_basics.py         # Learning reference: manual triple creation in Python
-│   ├── load_graph.py         # Loads sales_ontology.ttl into an RDFLib graph
-│   ├── query_graph.py        # SPARQL query functions
-│   ├── ai_core.py            # AI Core credentials + LLM initialisation
-│   ├── agent_a.py            # Agent A: tool-based (restrictive)
-│   └── agent_b.py            # Agent B: SPARQL-generating (flexible)
+│   └── app.py                # FastAPI server — serves UI + /chat endpoint
 │
 └── README.md
 ```

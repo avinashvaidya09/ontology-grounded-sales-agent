@@ -6,9 +6,10 @@ It cannot go outside the defined tools.
 from langchain_core.messages import HumanMessage, SystemMessage, ToolMessage
 from langchain_core.tools import tool
 
-from .ai_core import get_llm, load_credentials
-from .load_graph import load_graph
-from .query_graph import (
+from ..llm.ai_core import get_llm, load_credentials
+from ..llm.llm_config import AGENT_A_SYSTEM_PROMPT
+from ..kg.load_graph import load_graph
+from ..kg.query_graph import (
     get_customer_for_order,
     get_delivery_for_order,
     get_order_details,
@@ -58,11 +59,6 @@ def check_order_details(order_id: str) -> str:
 _TOOLS    = [check_order_status, check_order_customer, check_order_delivery, check_order_details]
 _TOOL_MAP = {t.name: t for t in _TOOLS}
 
-_SYSTEM_PROMPT = """You are a sales order exception agent.
-You have access to a knowledge graph containing sales orders, customers,
-deliveries, materials, and suppliers.
-Use the tools to look up facts. Do not guess — always call a tool first."""
-
 
 def run(question: str, llm, max_iterations: int = 5) -> str:
     """Answer a question using tool calls backed by SPARQL queries.
@@ -70,7 +66,7 @@ def run(question: str, llm, max_iterations: int = 5) -> str:
     Loops until the LLM returns a text answer or max_iterations is reached.
     """
     llm_with_tools = llm.bind_tools(_TOOLS)
-    messages = [SystemMessage(_SYSTEM_PROMPT), HumanMessage(question)]
+    messages = [SystemMessage(AGENT_A_SYSTEM_PROMPT), HumanMessage(question)]
 
     for _ in range(max_iterations):
         response = llm_with_tools.invoke(messages)

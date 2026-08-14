@@ -1,3 +1,5 @@
 rdflib==7.1.4
 generative-ai-hub-sdk[langchain,openai]
 aioboto3
+fastapi
+uvicorn[standard]
