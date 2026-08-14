@@ -284,9 +284,9 @@
       <span class="agent-btn-tag">Tool-based · Constrained</span>
     </button>
 
-    <button class="agent-btn" id="btn-b" disabled>
+    <button class="agent-btn" id="btn-b" onclick="selectAgent('b', this)">
       <span class="agent-btn-title">Agent B</span>
-      <span class="agent-btn-tag">SPARQL-generating · Coming soon</span>
+      <span class="agent-btn-tag">SPARQL-generating · Flexible</span>
     </button>
 
     <div class="agent-description" id="agent-desc">
@@ -305,13 +305,6 @@
     </div>
 
     <div class="messages" id="messages">
-      <div class="message agent">
-        <div class="message-label">Agent A</div>
-        <div class="bubble">
-          Hello! I can answer questions about sales orders, deliveries, materials, and suppliers.
-          Try asking: <em>"Why is SO100 delayed?"</em> or <em>"Which customer placed SO101?"</em>
-        </div>
-      </div>
     </div>
 
     <div class="input-area">
@@ -328,18 +321,23 @@
   <script>
     let selectedAgent = 'a';
 
+    // Show initial greeting for the default agent
+    window.addEventListener('DOMContentLoaded', () => addMessage(agentMeta['a'].greeting, 'agent'));
+
     const agentMeta = {
       a: {
         title:    'Agent A — Tool-based',
         subtitle: 'Constrained · SPARQL functions',
         desc:     'Uses pre-built SPARQL functions as tools. Safe and constrained — the LLM cannot query outside defined functions.',
         label:    'Agent A',
+        greeting: 'Hello! I can answer questions about sales orders, deliveries, materials, and suppliers. Try asking: "Why is SO100 delayed?" or "Which customer placed SO101?"',
       },
       b: {
         title:    'Agent B — SPARQL Generating',
         subtitle: 'Flexible · LLM writes SPARQL',
         desc:     'Generates SPARQL queries from the ontology schema. More flexible, but requires the LLM to know exact property names.',
         label:    'Agent B',
+        greeting: 'Hello! I write SPARQL queries from the ontology schema to answer your questions. Try asking: "Why is SO100 delayed?" or "Which orders are confirmed?"',
       },
     };
 
@@ -348,9 +346,11 @@
       document.querySelectorAll('.agent-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       const meta = agentMeta[agent];
-      document.getElementById('agent-desc').textContent    = meta.desc;
-      document.getElementById('header-title').textContent  = meta.title;
+      document.getElementById('agent-desc').textContent      = meta.desc;
+      document.getElementById('header-title').textContent    = meta.title;
       document.getElementById('header-subtitle').textContent = meta.subtitle;
+      document.getElementById('messages').innerHTML = '';
+      addMessage(meta.greeting, 'agent');
     }
 
     function addMessage(text, role) {

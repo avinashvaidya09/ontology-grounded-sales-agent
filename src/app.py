@@ -6,7 +6,7 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
 from .llm.ai_core import get_llm, load_credentials
-from .agents import agent_a
+from .agents import agent_a, agent_b
 
 app = FastAPI()
 
@@ -35,7 +35,9 @@ async def chat(body: ChatRequest):
 
     if body.agent == "a":
         answer = agent_a.run(body.question, _llm)
+    elif body.agent == "b":
+        answer = agent_b.run(body.question, _llm)
     else:
-        answer = "Agent B is not yet available."
+        answer = f"Unknown agent: {body.agent}"
 
     return {"answer": answer}
