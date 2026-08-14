@@ -9,11 +9,25 @@ A Sales Order Exception Agent that can answer questions like:
 
 > "Why is sales order SO100 delayed, and which supplier is involved?"
 
+## Requirements
+
+- Python 3.12 — required for `pydantic-core` (Rust extension) to build correctly
+- SAP AI Core service key (`aicore_service_key.json` at project root — not committed to git)
+
 ## Setup
 
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate      # macOS/Linux
+# Ensure Python 3.12 is installed
+python3.12 --version
+# If not: brew install python@3.12
+
+# Create virtual environment with Python 3.12
+python3.12 -m venv .venv
+source .venv/bin/activate
+
+# Upgrade pip, then install dependencies in two steps
+# (avoids pip dependency resolution depth errors)
+pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
@@ -21,10 +35,16 @@ pip install -r requirements.txt
 
 ```bash
 # Load the graph and print all triples
-python3 src/load_graph.py
+python3 -m src.load_graph
 
 # Run SPARQL queries across all orders
-python3 src/query_graph.py
+python3 -m src.query_graph
+
+# Run Agent A (tool-based)
+python3 -m src.agent_a
+
+# Run Agent B (SPARQL-generating) — coming soon
+python3 -m src.agent_b
 ```
 
 ## Project structure
@@ -32,7 +52,8 @@ python3 src/query_graph.py
 ```
 ontology-grounded-sales-agent/
 │
-├── requirements.txt          # Python dependencies (rdflib)
+├── requirements.txt          # Python dependencies
+├── aicore_service_key.json   # AI Core credentials (not committed to git)
 │
 ├── data/
 │   ├── rdf_basics.ttl        # Learning reference: three hand-written triples
@@ -41,8 +62,10 @@ ontology-grounded-sales-agent/
 ├── src/
 │   ├── rdf_basics.py         # Learning reference: manual triple creation in Python
 │   ├── load_graph.py         # Loads sales_ontology.ttl into an RDFLib graph
-│   ├── query_graph.py        # SPARQL queries against the graph (Stage 4+)
-│   └── agent.py              # LLM agent grounded on the KG (Stage 6+)
+│   ├── query_graph.py        # SPARQL query functions
+│   ├── ai_core.py            # AI Core credentials + LLM initialisation
+│   ├── agent_a.py            # Agent A: tool-based (restrictive)
+│   └── agent_b.py            # Agent B: SPARQL-generating (flexible)
 │
 └── README.md
 ```
@@ -87,7 +110,7 @@ GLOBEX --places-->  SO101  (status: CONFIRMED,  material: MAT101, availability: 
 
 ## Agent architecture (Stage 6)
 
-Two agents are implemented in `src/agent.py`, using SAP AI Core via the Gen AI Hub SDK.
+Two agents are implemented using SAP AI Core via the Gen AI Hub SDK.
 
 ### Agent A — Tool-based (restrictive)
 

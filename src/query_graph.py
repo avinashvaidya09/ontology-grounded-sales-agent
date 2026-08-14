@@ -4,7 +4,7 @@ Each function wraps one business question as a parameterised SPARQL query.
 """
 from rdflib import Graph, Namespace
 
-from load_graph import load_graph
+from .load_graph import load_graph
 
 SALES = Namespace("http://example.org/sales/")
 
