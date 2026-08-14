@@ -89,3 +89,49 @@ sales:SO100         sales:fulfilledBy sales:DEL800 .
 sales:DEL800        sales:fulfills    sales:SO100_ITEM10 .
 sales:SO100_ITEM10  sales:references  sales:MAT100 .
 sales:MAT100        sales:suppliedBy  sales:SUP300 .
+
+# SO101 — GLOBEX / CONFIRMED / MAT101 IN_STOCK / SUP301
+
+sales:GLOBEX        rdf:type         sales:Customer ;
+                    rdfs:label       "Globex Corp" .
+
+sales:SO101         rdf:type         sales:SalesOrder ;
+                    rdfs:label       "Sales Order 101" ;
+                    sales:status     "CONFIRMED" .
+
+sales:SO101_ITEM10  rdf:type         sales:SalesOrderItem .
+
+sales:DEL801        rdf:type         sales:Delivery .
+
+sales:MAT101        rdf:type         sales:Material ;
+                    sales:availabilityStatus "IN_STOCK" .
+
+sales:SUP301        rdf:type         sales:Supplier ;
+                    rdfs:label       "Supplier 301" .
+
+sales:GLOBEX        sales:places      sales:SO101 .
+sales:SO101         sales:contains    sales:SO101_ITEM10 .
+sales:SO101         sales:fulfilledBy sales:DEL801 .
+sales:DEL801        sales:fulfills    sales:SO101_ITEM10 .
+sales:SO101_ITEM10  sales:references  sales:MAT101 .
+sales:MAT101        sales:suppliedBy  sales:SUP301 .
+
+# SO102 — ACME / PENDING / MAT102 LOW_STOCK / SUP300 (same supplier as MAT100)
+
+sales:SO102         rdf:type         sales:SalesOrder ;
+                    rdfs:label       "Sales Order 102" ;
+                    sales:status     "PENDING" .
+
+sales:SO102_ITEM10  rdf:type         sales:SalesOrderItem .
+
+sales:DEL802        rdf:type         sales:Delivery .
+
+sales:MAT102        rdf:type         sales:Material ;
+                    sales:availabilityStatus "LOW_STOCK" .
+
+sales:ACME          sales:places      sales:SO102 .
+sales:SO102         sales:contains    sales:SO102_ITEM10 .
+sales:SO102         sales:fulfilledBy sales:DEL802 .
+sales:DEL802        sales:fulfills    sales:SO102_ITEM10 .
+sales:SO102_ITEM10  sales:references  sales:MAT102 .
+sales:MAT102        sales:suppliedBy  sales:SUP300 .
