@@ -1,0 +1,5 @@
+@prefix ex: <http://example.org/sales/> .
+
+ex:ACME    ex:places   ex:SO100 .
+ex:SO100   ex:status   "DELAYED" .
+ex:SO100   ex:contains ex:SO100_ITEM10 .
