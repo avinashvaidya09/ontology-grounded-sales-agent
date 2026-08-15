@@ -13,8 +13,10 @@ from .kg.load_graph import load_graph
 app = FastAPI()
 
 load_credentials()
-_llm = get_llm()
+_llm   = get_llm()
 _graph = load_graph()
+
+_chat_history: dict[str, list] = {"a": [], "b": []}
 
 SALES_URI = "http://example.org/sales/"
 _REL_PREDS = {"places", "contains", "fulfilledBy", "fulfills", "references", "suppliedBy"}
@@ -72,6 +74,12 @@ async def graph_data():
     return {"nodes": nodes, "edges": edges}
 
 
+@app.get("/history/{agent}")
+async def history(agent: str):
+    """Return the saved chat history for the given agent."""
+    return {"messages": _chat_history.get(agent, [])}
+
+
 @app.post("/chat")
 async def chat(body: ChatRequest):
     """Route a question to the selected agent and return the answer."""
@@ -84,5 +92,9 @@ async def chat(body: ChatRequest):
         answer = agent_b.run(body.question, _llm)
     else:
         answer = f"Unknown agent: {body.agent}"
+
+    history_key = body.agent if body.agent in _chat_history else "a"
+    _chat_history[history_key].append({"role": "user",  "text": body.question})
+    _chat_history[history_key].append({"role": "agent", "text": answer})
 
     return {"answer": answer}

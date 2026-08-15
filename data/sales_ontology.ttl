@@ -135,3 +135,124 @@ sales:SO102         sales:fulfilledBy sales:DEL802 .
 sales:DEL802        sales:fulfills    sales:SO102_ITEM10 .
 sales:SO102_ITEM10  sales:references  sales:MAT102 .
 sales:MAT102        sales:suppliedBy  sales:SUP300 .
+
+# ─────────────────────────────────────────────
+# Additional instance data — 5 more orders
+# Introduces multi-item orders and shared materials/suppliers
+# ─────────────────────────────────────────────
+
+# New customer
+
+sales:INITECH       rdf:type         sales:Customer ;
+                    rdfs:label       "Initech Corp" .
+
+# New supplier
+
+sales:SUP302        rdf:type         sales:Supplier ;
+                    rdfs:label       "Supplier 302" .
+
+# New materials
+
+sales:MAT103        rdf:type                 sales:Material ;
+                    sales:availabilityStatus "IN_STOCK" .
+
+sales:MAT104        rdf:type                 sales:Material ;
+                    sales:availabilityStatus "OUT_OF_STOCK" .
+
+sales:MAT105        rdf:type                 sales:Material ;
+                    sales:availabilityStatus "OUT_OF_STOCK" .
+
+sales:MAT103        sales:suppliedBy  sales:SUP300 .
+sales:MAT104        sales:suppliedBy  sales:SUP302 .
+sales:MAT105        sales:suppliedBy  sales:SUP302 .
+
+# SO103 — ACME / CONFIRMED / 2 items: MAT101 (shared) + MAT103
+
+sales:SO103         rdf:type         sales:SalesOrder ;
+                    rdfs:label       "Sales Order 103" ;
+                    sales:status     "CONFIRMED" .
+
+sales:SO103_ITEM10  rdf:type         sales:SalesOrderItem .
+sales:SO103_ITEM20  rdf:type         sales:SalesOrderItem .
+sales:DEL803        rdf:type         sales:Delivery .
+
+sales:ACME          sales:places      sales:SO103 .
+sales:SO103         sales:contains    sales:SO103_ITEM10 .
+sales:SO103         sales:contains    sales:SO103_ITEM20 .
+sales:SO103         sales:fulfilledBy sales:DEL803 .
+sales:DEL803        sales:fulfills    sales:SO103_ITEM10 .
+sales:DEL803        sales:fulfills    sales:SO103_ITEM20 .
+sales:SO103_ITEM10  sales:references  sales:MAT101 .
+sales:SO103_ITEM20  sales:references  sales:MAT103 .
+
+# SO104 — GLOBEX / DELAYED / 2 items: MAT100 (shared, out of stock) + MAT104
+
+sales:SO104         rdf:type         sales:SalesOrder ;
+                    rdfs:label       "Sales Order 104" ;
+                    sales:status     "DELAYED" .
+
+sales:SO104_ITEM10  rdf:type         sales:SalesOrderItem .
+sales:SO104_ITEM20  rdf:type         sales:SalesOrderItem .
+sales:DEL804        rdf:type         sales:Delivery .
+
+sales:GLOBEX        sales:places      sales:SO104 .
+sales:SO104         sales:contains    sales:SO104_ITEM10 .
+sales:SO104         sales:contains    sales:SO104_ITEM20 .
+sales:SO104         sales:fulfilledBy sales:DEL804 .
+sales:DEL804        sales:fulfills    sales:SO104_ITEM10 .
+sales:DEL804        sales:fulfills    sales:SO104_ITEM20 .
+sales:SO104_ITEM10  sales:references  sales:MAT100 .
+sales:SO104_ITEM20  sales:references  sales:MAT104 .
+
+# SO105 — INITECH / PENDING / 1 item: MAT102 (shared, low stock)
+
+sales:SO105         rdf:type         sales:SalesOrder ;
+                    rdfs:label       "Sales Order 105" ;
+                    sales:status     "PENDING" .
+
+sales:SO105_ITEM10  rdf:type         sales:SalesOrderItem .
+sales:DEL805        rdf:type         sales:Delivery .
+
+sales:INITECH       sales:places      sales:SO105 .
+sales:SO105         sales:contains    sales:SO105_ITEM10 .
+sales:SO105         sales:fulfilledBy sales:DEL805 .
+sales:DEL805        sales:fulfills    sales:SO105_ITEM10 .
+sales:SO105_ITEM10  sales:references  sales:MAT102 .
+
+# SO106 — INITECH / DELAYED / 2 items: MAT103 (shared) + MAT105
+
+sales:SO106         rdf:type         sales:SalesOrder ;
+                    rdfs:label       "Sales Order 106" ;
+                    sales:status     "DELAYED" .
+
+sales:SO106_ITEM10  rdf:type         sales:SalesOrderItem .
+sales:SO106_ITEM20  rdf:type         sales:SalesOrderItem .
+sales:DEL806        rdf:type         sales:Delivery .
+
+sales:INITECH       sales:places      sales:SO106 .
+sales:SO106         sales:contains    sales:SO106_ITEM10 .
+sales:SO106         sales:contains    sales:SO106_ITEM20 .
+sales:SO106         sales:fulfilledBy sales:DEL806 .
+sales:DEL806        sales:fulfills    sales:SO106_ITEM10 .
+sales:DEL806        sales:fulfills    sales:SO106_ITEM20 .
+sales:SO106_ITEM10  sales:references  sales:MAT103 .
+sales:SO106_ITEM20  sales:references  sales:MAT105 .
+
+# SO107 — ACME / CONFIRMED / 2 items: MAT101 (shared) + MAT105 (shared with SO106)
+
+sales:SO107         rdf:type         sales:SalesOrder ;
+                    rdfs:label       "Sales Order 107" ;
+                    sales:status     "CONFIRMED" .
+
+sales:SO107_ITEM10  rdf:type         sales:SalesOrderItem .
+sales:SO107_ITEM20  rdf:type         sales:SalesOrderItem .
+sales:DEL807        rdf:type         sales:Delivery .
+
+sales:ACME          sales:places      sales:SO107 .
+sales:SO107         sales:contains    sales:SO107_ITEM10 .
+sales:SO107         sales:contains    sales:SO107_ITEM20 .
+sales:SO107         sales:fulfilledBy sales:DEL807 .
+sales:DEL807        sales:fulfills    sales:SO107_ITEM10 .
+sales:DEL807        sales:fulfills    sales:SO107_ITEM20 .
+sales:SO107_ITEM10  sales:references  sales:MAT101 .
+sales:SO107_ITEM20  sales:references  sales:MAT105 .

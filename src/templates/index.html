@@ -336,8 +336,20 @@
   <script>
     let selectedAgent = 'a';
 
-    // Show initial greeting for the default agent
-    window.addEventListener('DOMContentLoaded', () => addMessage(agentMeta['a'].greeting, 'agent'));
+    // Show initial greeting on load, or restore history if session already has messages
+    window.addEventListener('DOMContentLoaded', () => loadHistory('a'));
+
+    async function loadHistory(agent) {
+      const res  = await fetch(`/history/${agent}`);
+      const data = await res.json();
+      const container = document.getElementById('messages');
+      container.innerHTML = '';
+      if (data.messages.length === 0) {
+        addMessage(agentMeta[agent].greeting, 'agent');
+      } else {
+        data.messages.forEach(m => addMessage(m.text, m.role));
+      }
+    }
 
     const agentMeta = {
       a: {
@@ -364,8 +376,7 @@
       document.getElementById('agent-desc').textContent      = meta.desc;
       document.getElementById('header-title').textContent    = meta.title;
       document.getElementById('header-subtitle').textContent = meta.subtitle;
-      document.getElementById('messages').innerHTML = '';
-      addMessage(meta.greeting, 'agent');
+      loadHistory(agent);
     }
 
     function addMessage(text, role) {
