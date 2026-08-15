@@ -1,7 +1,8 @@
 # Ontology-Grounded Sales Agent
 
-A learning project exploring RDF, SPARQL, and ontology-grounded AI agents
-using the Python RDFLib library.
+A hands-on learning project exploring RDF, SPARQL, and ontology-grounded AI agents
+using Python and RDFLib — built step-by-step to understand the foundations before
+introducing an LLM.
 
 ## Scenario
 
@@ -25,8 +26,7 @@ python3.12 --version
 python3.12 -m venv .venv
 source .venv/bin/activate
 
-# Upgrade pip, then install dependencies in two steps
-# (avoids pip dependency resolution depth errors)
+# Upgrade pip, then install dependencies
 pip install --upgrade pip
 pip install -r requirements.txt
 ```
@@ -34,18 +34,19 @@ pip install -r requirements.txt
 ## Run
 
 ```bash
-# Run SPARQL queries across all orders
+# Run SPARQL queries across all orders (no LLM required)
 python3 -m src.kg.query_graph
 
 # Run Agent A (tool-based) — CLI demo
 python3 -m src.agents.agent_a
 
-# Start the chat UI (FastAPI + uvicorn)
+# Run Agent B (SPARQL-generating) — CLI demo
+python3 -m src.agents.agent_b
+
+# Start the full chat UI (FastAPI + uvicorn)
 python3 -m uvicorn src.app:app --reload --port 5000
 # Then open http://localhost:5000
-
-# Run Agent B (SPARQL-generating) — coming soon
-python3 -m src.agents.agent_b
+# Knowledge graph visualisation: http://localhost:5000/graph
 ```
 
 ## Project structure
@@ -65,24 +66,25 @@ ontology-grounded-sales-agent/
 │   │   ├── load_graph.py     # Loads sales_ontology.ttl into an RDFLib graph
 │   │   └── query_graph.py    # SPARQL query functions
 │   ├── agents/
-│   │   ├── agent_a.py        # Agent A: tool-based (restrictive)
+│   │   ├── agent_a.py        # Agent A: tool-based (constrained)
 │   │   └── agent_b.py        # Agent B: SPARQL-generating (flexible)
 │   ├── llm/
 │   │   ├── ai_core.py        # AI Core credentials + LLM initialisation
 │   │   └── llm_config.py     # System prompt constants for all agents
 │   ├── templates/
-│   │   └── index.html        # Chat UI (HTML + CSS + JS)
+│   │   ├── index.html        # Chat UI — agent selector, message history, typing indicator
+│   │   └── graph.html        # D3.js force-directed knowledge graph visualisation
 │   ├── rdf_basics.py         # Learning reference: manual triple creation in Python
-│   └── app.py                # FastAPI server — serves UI + /chat endpoint
+│   └── app.py                # FastAPI server — /chat, /graph, /graph-data, /history
 │
 └── README.md
 ```
 
 ## Knowledge graph
 
-The ontology in `data/sales_ontology.ttl` has two sections:
+The ontology in `data/sales_ontology.ttl` has two sections.
 
-**Schema (ontology layer)** — classes and relationships:
+**Schema (ontology layer)** — classes and object/datatype properties:
 
 ```
 Customer, SalesOrder, SalesOrderItem, Delivery, Material, Supplier
@@ -93,93 +95,126 @@ SalesOrder     --fulfilledBy--->  Delivery
 Delivery       --fulfills------>  SalesOrderItem
 SalesOrderItem --references--->  Material
 Material       --suppliedBy--->  Supplier
+
+SalesOrder.status              string literal  (DELAYED | CONFIRMED | PENDING)
+Material.availabilityStatus    string literal  (OUT_OF_STOCK | IN_STOCK | LOW_STOCK)
 ```
 
-**Instance data** — the specific business records (3 orders, 2 customers, 2 suppliers):
+**Instance data** — 3 customers, 8 orders, 13 order items, 8 deliveries, 6 materials, 3 suppliers:
 
 ```
-ACME   --places-->  SO100  (status: DELAYED,    material: MAT100, availability: OUT_OF_STOCK, supplier: SUP300)
-ACME   --places-->  SO102  (status: PENDING,    material: MAT102, availability: LOW_STOCK,    supplier: SUP300)
-GLOBEX --places-->  SO101  (status: CONFIRMED,  material: MAT101, availability: IN_STOCK,     supplier: SUP301)
+ACME    --places-->  SO100  DELAYED    MAT100  OUT_OF_STOCK  SUP300
+ACME    --places-->  SO102  PENDING    MAT102  LOW_STOCK     SUP300
+ACME    --places-->  SO103  CONFIRMED  MAT101  IN_STOCK      SUP301
+                            (also)     MAT103  IN_STOCK      SUP300
+ACME    --places-->  SO107  CONFIRMED  MAT101  IN_STOCK      SUP301
+                            (also)     MAT105  OUT_OF_STOCK  SUP302
+
+GLOBEX  --places-->  SO101  CONFIRMED  MAT101  IN_STOCK      SUP301
+GLOBEX  --places-->  SO104  DELAYED    MAT100  OUT_OF_STOCK  SUP300
+                            (also)     MAT104  OUT_OF_STOCK  SUP302
+
+INITECH --places-->  SO105  PENDING    MAT102  LOW_STOCK     SUP300
+INITECH --places-->  SO106  DELAYED    MAT103  IN_STOCK      SUP300
+                            (also)     MAT105  OUT_OF_STOCK  SUP302
 ```
 
-## Stages
+Several materials are shared across orders (e.g. MAT100 appears in SO100 and SO104),
+and SUP302 supplies multiple out-of-stock materials — enabling cross-order reasoning.
 
-- Stage 0 — Project setup ✓
-- Stage 1 — RDF fundamentals ✓
-- Stage 2 — Business ontology ✓
-- Stage 3 — Instance data ✓
-- Stage 4 — SPARQL queries ✓
-- Stage 5 — Python + SPARQL ✓
-- Stage 6 — LLM-powered agent ← next
-- Stage 7 — Architecture comparison
+## Learning stages
 
----
+| Stage | Topic | Status |
+|-------|-------|--------|
+| 0 | Project setup | ✓ |
+| 1 | RDF fundamentals (triples, URIs, literals, namespaces) | ✓ |
+| 2 | Business ontology in Turtle | ✓ |
+| 3 | Instance data + comparison with relational schema | ✓ |
+| 4 | Manual SPARQL queries | ✓ |
+| 5 | Python + SPARQL via RDFLib | ✓ |
+| 6 | LLM-powered agents (Agent A + Agent B) + web UI | ✓ |
+| 7 | Architecture comparison (tool-based vs ontology-grounded vs hybrid) | planned |
 
-## Agent architecture (Stage 6)
+## Agent architecture
 
-Two agents are implemented using SAP AI Core via the Gen AI Hub SDK.
+Both agents are implemented using SAP AI Core via the Gen AI Hub SDK (gpt-4o).
 
-### Agent A — Tool-based (restrictive)
+### Agent A — Tool-based (constrained)
 
-The LLM is given a fixed set of Python functions as tools. It cannot go outside them.
+The LLM is given a fixed set of Python functions as tools. It cannot query outside them.
 
 ```
 User question
       ↓
-LLM + tool descriptions (function names + docstrings)
+LLM + tool descriptions (function signatures + docstrings)
       ↓
 LLM selects a tool: get_order_details("SO100")
       ↓
-Python executes the SPARQL (query_graph.py)
+Python executes pre-written SPARQL (query_graph.py)
       ↓
 LLM formats the result as a natural language answer
 ```
 
 - Schema knowledge is encoded in tool descriptions, not raw RDF
-- Equivalent to an MCP/function-calling agent
+- Equivalent to an MCP / function-calling agent
 - Safe: hallucinated property names are impossible — the SPARQL is pre-written
+- Limited: can only answer questions covered by the pre-built functions
 
 ### Agent B — SPARQL-generating (flexible)
 
-The LLM receives the ontology schema and generates SPARQL directly.
+The LLM receives the ontology schema and writes SPARQL dynamically.
 
 ```
 User question
       ↓
-LLM + ontology schema (Turtle schema section in system prompt)
+LLM + ontology schema (classes, properties, few-shot examples in system prompt)
       ↓
-LLM generates a SPARQL query
+LLM generates a SPARQL SELECT query
       ↓
-Python executes it via g.query()
+Python executes it via g.query()  →  results logged to terminal
       ↓
 LLM formats the result as a natural language answer
 ```
 
 - Can answer questions not anticipated by pre-built functions
-- LLM must know exact property names and traversal direction from the schema
-- Risk: invalid SPARQL if the LLM misreads the schema
+- More flexible: any traversal across the graph is possible
+- Risk: the LLM must use exact property names and correct literal quoting
+- Key lesson: status values are string literals (`"DELAYED"`) not URIs (`sales:DELAYED`)
 
-### Context provided to the LLM
+### Schema context provided to each agent
 
 | Agent | What the LLM sees |
 |---|---|
 | Agent A | Tool names, parameter names, and docstrings — schema is implicit |
-| Agent B | The schema section of `sales_ontology.ttl` pasted into the system prompt |
+| Agent B | Classes, properties, literal types, CORRECT/WRONG examples, few-shot SPARQL queries |
 
-### In the real world (SAP HANA Cloud KG, enterprise)
+### Scaling to enterprise ontologies (e.g. SAP HANA Cloud KG)
 
-Large enterprise ontologies have thousands of classes — the full schema does not fit in a prompt.
-Common approaches:
+Large enterprise ontologies have thousands of classes — the full schema never fits in a prompt.
 
 | Approach | How it works | When to use |
 |---|---|---|
 | Static schema in system prompt | Full schema pasted in | Small ontologies (like this project) |
-| Schema summarisation | Pre-generate a compact natural-language description of the ontology | Medium ontologies |
+| Schema summarisation | Pre-generate a compact natural-language description | Medium ontologies |
 | Schema retrieval | Embed schema fragments, retrieve relevant ones per query (RAG-like) | Large ontologies |
-| Few-shot SPARQL examples | Include 3–5 example question/query pairs so the LLM learns the patterns | Any size, improves accuracy |
+| Few-shot SPARQL examples | Include 3–5 example question/query pairs | Any size — improves accuracy |
 
-In SAP HANA Cloud KG, data from S/4HANA (via OData/BAPI) is extracted, mapped to RDF triples
-by an ETL pipeline, and loaded into the graph store. The SPARQL endpoint is then exposed to agents.
-The ontology schema acts as the grounding layer — the agent reasons over named semantic relationships
-rather than guessing from column names or API descriptions.
+In SAP HANA Cloud KG, data from S/4HANA (via OData/BAPI) is extracted, mapped to RDF
+triples by an ETL pipeline, and loaded into the graph store. The SPARQL endpoint is then
+exposed to agents. The ontology schema acts as the grounding layer — the agent reasons
+over named semantic relationships rather than guessing from column names or API descriptions.
+
+## Web UI
+
+The FastAPI application (`src/app.py`) exposes:
+
+| Route | Purpose |
+|---|---|
+| `GET /` | Chat UI with agent selector and message history |
+| `GET /graph` | D3.js force-directed knowledge graph visualisation |
+| `GET /graph-data` | JSON nodes + edges for the D3 visualisation |
+| `GET /history/{agent}` | Retrieve in-session chat history for agent `a` or `b` |
+| `POST /chat` | Send a question to the selected agent; returns the answer |
+
+Chat history is stored in-memory on the server and persists across agent switches
+for the duration of the server session. It is cleared on server restart.
