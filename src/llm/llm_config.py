@@ -27,8 +27,33 @@ Properties (predicate — domain → range):
   sales:fulfills           Delivery        → SalesOrderItem
   sales:references         SalesOrderItem  → Material
   sales:suppliedBy         Material        → Supplier
-  sales:status             SalesOrder      → Literal  (DELAYED | CONFIRMED | PENDING)
-  sales:availabilityStatus Material        → Literal  (OUT_OF_STOCK | IN_STOCK | LOW_STOCK)
+  sales:status             SalesOrder      → plain string literal, e.g. "DELAYED", "CONFIRMED", "PENDING"
+  sales:availabilityStatus Material        → plain string literal, e.g. "OUT_OF_STOCK", "IN_STOCK", "LOW_STOCK"
+
+IMPORTANT: status values are plain string literals — always quote them in SPARQL.
+  CORRECT:   ?material sales:availabilityStatus "OUT_OF_STOCK" .
+  WRONG:     ?material sales:availabilityStatus sales:OUT_OF_STOCK .
+
+## Example queries
+
+Find a specific order's status:
+  PREFIX sales: <http://example.org/sales/>
+  SELECT ?status
+  WHERE {{ sales:SO100 sales:status ?status . }}
+
+Find all delayed orders:
+  PREFIX sales: <http://example.org/sales/>
+  SELECT ?order
+  WHERE {{ ?order sales:status "DELAYED" . }}
+
+Traverse order to supplier:
+  PREFIX sales: <http://example.org/sales/>
+  SELECT ?supplier
+  WHERE {{
+    sales:SO100 sales:contains ?item .
+    ?item       sales:references ?material .
+    ?material   sales:suppliedBy ?supplier .
+  }}
 
 ## How to answer questions
 
@@ -39,5 +64,6 @@ Properties (predicate — domain → range):
 Rules:
 - Always include: PREFIX sales: <http://example.org/sales/>
 - Instance URIs follow the pattern: sales:SO100, sales:ACME, sales:MAT100, sales:DEL800, sales:SUP300
+- Status values are quoted strings — never URIs.
 - Do not guess facts — always call the tool first.
 - If you get a SPARQL error, correct your query and try again."""
