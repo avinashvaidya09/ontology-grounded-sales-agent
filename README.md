@@ -4,6 +4,32 @@ A hands-on learning project exploring RDF, SPARQL, and ontology-grounded AI agen
 using Python and RDFLib — built step-by-step to understand the foundations before
 introducing an LLM.
 
+> **Want to learn this hands-on?**
+> Create an empty project, copy `CLAUDE.md` into it, and open it with Claude Code.
+> Claude will teach you every concept and build the project with you one step at a time —
+> explaining RDF, SPARQL, and agent architecture before writing a single line of code.
+
+## Table of contents
+
+- [Scenario](#scenario)
+- [Requirements](#requirements)
+- [Setup](#setup)
+- [Run](#run)
+- [Project structure](#project-structure)
+- [Knowledge graph](#knowledge-graph)
+- [Learning stages](#learning-stages)
+- [Agent architecture](#agent-architecture)
+  - [Agent A — Tool-based](#agent-a--tool-based-constrained)
+  - [Agent B — SPARQL-generating](#agent-b--sparql-generating-flexible)
+  - [Schema context per agent](#schema-context-provided-to-each-agent)
+  - [Scaling to enterprise ontologies](#scaling-to-enterprise-ontologies-eg-sap-hana-cloud-kg)
+- [Architecture comparison](#architecture-comparison-stage-7)
+  - [Pattern A — Tool/MCP](#pattern-a--prompt--tool-agent-agent-a)
+  - [Pattern B — Ontology-grounded](#pattern-b--ontology-grounded-agent-agent-b)
+  - [Pattern C — Hybrid](#pattern-c--hybrid-enterprise-target-architecture)
+  - [Trade-off table](#trade-off-table)
+- [Web UI](#web-ui)
+
 ## Scenario
 
 A Sales Order Exception Agent that can answer questions like:
@@ -133,7 +159,7 @@ and SUP302 supplies multiple out-of-stock materials — enabling cross-order rea
 | 4 | Manual SPARQL queries | ✓ |
 | 5 | Python + SPARQL via RDFLib | ✓ |
 | 6 | LLM-powered agents (Agent A + Agent B) + web UI | ✓ |
-| 7 | Architecture comparison (tool-based vs ontology-grounded vs hybrid) | planned |
+| 7 | Architecture comparison (tool-based vs ontology-grounded vs hybrid) | ✓ |
 
 ## Agent architecture
 
@@ -203,6 +229,77 @@ In SAP HANA Cloud KG, data from S/4HANA (via OData/BAPI) is extracted, mapped to
 triples by an ETL pipeline, and loaded into the graph store. The SPARQL endpoint is then
 exposed to agents. The ontology schema acts as the grounding layer — the agent reasons
 over named semantic relationships rather than guessing from column names or API descriptions.
+
+## Architecture comparison (Stage 7)
+
+### Pattern A — Prompt + Tool agent (Agent A)
+
+```
+User question
+      ↓
+LLM reads tool descriptions (function names + docstrings)
+      ↓
+Calls: get_order_details("SO100")
+      ↓
+Pre-written Python function runs pre-written SPARQL
+      ↓
+LLM formats the result
+```
+
+Equivalent to an MCP server or OData API agent. The LLM selects from a fixed menu of
+functions — it never touches the data model directly. Schema knowledge is implicit in
+the function signatures. Every SAP CAP service with an LLM routing layer is this pattern.
+
+### Pattern B — Ontology-grounded agent (Agent B)
+
+```
+User question
+      ↓
+LLM reads the ontology schema (classes, properties, literal types, few-shot SPARQL)
+      ↓
+LLM writes SPARQL dynamically
+      ↓
+Python executes it against the knowledge graph
+      ↓
+LLM formats the result
+```
+
+The LLM reasons over named semantic relationships, not function signatures. Any traversal
+path the ontology defines is reachable — including ones never anticipated at design time.
+
+### Pattern C — Hybrid (enterprise target architecture)
+
+```
+                 ┌─ Ontology / KG  (reference data, relationships, classifications)
+User ──► Agent ──┤
+                 └─ APIs / tools   (live operational data, real-time transactional state)
+```
+
+Example: the KG holds semantic relationships (MAT100 is supplied by SUP300, SUP300 is in
+Germany, Germany has import restrictions) but the live stock level comes from an S/4HANA
+OData call at query time.
+
+### Trade-off table
+
+| Dimension | A — Tool/MCP | B — Ontology-grounded | C — Hybrid |
+|---|---|---|---|
+| Semantic grounding | Weak — schema buried in docstrings | Strong — relationships explicit in ontology | Strong for reference data |
+| Hallucination risk | Low for facts (SPARQL pre-written) | Medium — LLM can write invalid SPARQL | Mixed |
+| Explainability | Medium — tool call is logged, SPARQL hidden | High — generated SPARQL is the reasoning trace | High for KG path |
+| Graph traversal | Only pre-written paths | Any path the ontology defines | Full traversal over KG portion |
+| Cross-domain reasoning | Only if you wrote the join | Natural — KG encodes relationships explicitly | Best |
+| Live / operational data | Yes, if tools call live APIs | No — graph is loaded at startup | Yes — API side is real-time |
+| Freshness | As fresh as the API | Stale — requires ETL to reload | Mixed |
+| Complexity | Low initially; grows with tool count | Medium — requires ontology design upfront | Highest |
+| Maintenance | New concept → new tools + docstrings | New concept → new triples; agents pick it up | Both layers |
+
+---
+
+> **Note:** The architecture descriptions and trade-off observations above are based on
+> personal learning and reading from technical sources. They reflect an evolving
+> understanding, not definitive recommendations. Each pattern has valid use cases
+> depending on context. Readers are encouraged to evaluate the trade-offs against
+> their own requirements.
 
 ## Web UI
 
