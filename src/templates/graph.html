@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Knowledge Graph — Sales Domain</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0f172a;
+      color: #f1f5f9;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .top-bar {
+      padding: 14px 24px;
+      background: #1e1e2e;
+      border-bottom: 1px solid #313244;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+
+    .top-bar-title { font-size: 16px; font-weight: 700; color: #a6e3a1; }
+    .top-bar-sub   { font-size: 12px; color: #585b70; margin-top: 2px; }
+
+    .back-btn {
+      font-size: 13px;
+      color: #94a3b8;
+      text-decoration: none;
+      padding: 7px 14px;
+      border: 1px solid #313244;
+      border-radius: 8px;
+      transition: all 0.15s;
+    }
+    .back-btn:hover { color: #f1f5f9; border-color: #585b70; background: #2a2a3d; }
+
+    #canvas { flex: 1; position: relative; }
+    svg { width: 100%; height: 100%; }
+
+    .hint {
+      position: absolute;
+      bottom: 14px;
+      right: 18px;
+      font-size: 11px;
+      color: #45475a;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+
+<div class="top-bar">
+  <div>
+    <div class="top-bar-title">Knowledge Graph — Sales Domain</div>
+    <div class="top-bar-sub">Instance data · scroll to zoom · drag canvas to pan · drag node to pin</div>
+  </div>
+  <a href="/" class="back-btn">← Back to Chat</a>
+</div>
+
+<div id="canvas">
+  <svg id="graph"></svg>
+  <div class="hint">Zoom: scroll &nbsp;·&nbsp; Pan: drag canvas &nbsp;·&nbsp; Pin: drag node</div>
+</div>
+
+<script>
+  const TYPE_COLORS = {
+    Customer:       '#3b82f6',
+    SalesOrder:     '#7c3aed',
+    SalesOrderItem: '#6366f1',
+    Delivery:       '#d97706',
+    Material:       '#059669',
+    Supplier:       '#dc2626',
+  };
+
+  const STATUS_COLORS = {
+    DELAYED:      '#f87171',
+    CONFIRMED:    '#4ade80',
+    PENDING:      '#fbbf24',
+    OUT_OF_STOCK: '#f87171',
+    IN_STOCK:     '#4ade80',
+    LOW_STOCK:    '#fbbf24',
+  };
+
+  const R = 28;
+
+  fetch('/graph-data')
+    .then(r => r.json())
+    .then(({ nodes, edges }) => {
+      const W = document.getElementById('canvas').clientWidth;
+      const H = document.getElementById('canvas').clientHeight;
+
+      const svg = d3.select('#graph');
+      const g   = svg.append('g');
+
+      // Zoom / pan
+      svg.call(
+        d3.zoom().scaleExtent([0.15, 4])
+          .on('zoom', e => g.attr('transform', e.transform))
+      );
+
+      // Arrow marker
+      svg.append('defs').append('marker')
+        .attr('id', 'arrow')
+        .attr('viewBox', '0 -4 10 8')
+        .attr('refX', R + 13)
+        .attr('refY', 0)
+        .attr('markerWidth', 7)
+        .attr('markerHeight', 7)
+        .attr('orient', 'auto')
+        .append('path')
+          .attr('d', 'M0,-4L10,0L0,4')
+          .attr('fill', '#475569');
+
+      // ── edges ──────────────────────────────────────────────────────────────
+      const linkGroup = g.append('g');
+
+      const linkLine = linkGroup.selectAll('line')
+        .data(edges).join('line')
+        .attr('stroke', '#334155')
+        .attr('stroke-width', 1.5)
+        .attr('marker-end', 'url(#arrow)');
+
+      const linkLabel = linkGroup.selectAll('text')
+        .data(edges).join('text')
+        .attr('fill', '#64748b')
+        .attr('font-size', '10px')
+        .attr('text-anchor', 'middle')
+        .attr('dy', '-4')
+        .text(d => d.label);
+
+      // ── nodes ──────────────────────────────────────────────────────────────
+      const nodeGroup = g.append('g');
+
+      const nodeEl = nodeGroup.selectAll('g')
+        .data(nodes).join('g')
+        .style('cursor', 'grab')
+        .call(
+          d3.drag()
+            .on('start', (event, d) => {
+              if (!event.active) sim.alphaTarget(0.3).restart();
+              d.fx = d.x; d.fy = d.y;
+            })
+            .on('drag',  (event, d) => { d.fx = event.x; d.fy = event.y; })
+            .on('end',   (event, d) => {
+              if (!event.active) sim.alphaTarget(0);
+              // keep pinned — double-click to unpin
+            })
+        )
+        .on('dblclick', (event, d) => { d.fx = null; d.fy = null; });
+
+      // Circle
+      nodeEl.append('circle')
+        .attr('r', R)
+        .attr('fill', d => TYPE_COLORS[d.type] || '#475569')
+        .attr('stroke', d => {
+          const s = d.props?.status || d.props?.availabilityStatus;
+          return s ? (STATUS_COLORS[s] || '#1e293b') : '#1e1e2e';
+        })
+        .attr('stroke-width', d => (d.props?.status || d.props?.availabilityStatus) ? 3 : 2);
+
+      // Node ID
+      nodeEl.append('text')
+        .attr('fill', '#ffffff')
+        .attr('font-size', '11px')
+        .attr('font-weight', '700')
+        .attr('text-anchor', 'middle')
+        .attr('dy', d => (d.props?.status || d.props?.availabilityStatus) ? '-0.3em' : '0.35em')
+        .text(d => d.id);
+
+      // Status sub-label
+      nodeEl.filter(d => d.props?.status || d.props?.availabilityStatus)
+        .append('text')
+        .attr('fill', d => STATUS_COLORS[d.props?.status || d.props?.availabilityStatus] || '#94a3b8')
+        .attr('font-size', '8px')
+        .attr('font-weight', '600')
+        .attr('text-anchor', 'middle')
+        .attr('dy', '1.5em')
+        .text(d => d.props?.status || d.props?.availabilityStatus);
+
+      // ── legend ─────────────────────────────────────────────────────────────
+      const legend = svg.append('g').attr('transform', 'translate(16,16)');
+      const entries = Object.entries(TYPE_COLORS);
+      legend.append('rect')
+        .attr('x', -8).attr('y', -8)
+        .attr('width', 162).attr('height', entries.length * 22 + 16)
+        .attr('fill', '#1e293b').attr('rx', 8).attr('opacity', 0.92);
+
+      entries.forEach(([type, color], i) => {
+        const row = legend.append('g').attr('transform', `translate(4,${i * 22 + 6})`);
+        row.append('circle').attr('cx', 8).attr('cy', 7).attr('r', 7).attr('fill', color);
+        row.append('text').attr('x', 22).attr('y', 12)
+          .attr('fill', '#94a3b8').attr('font-size', '12px').text(type);
+      });
+
+      // ── force simulation ───────────────────────────────────────────────────
+      const sim = d3.forceSimulation(nodes)
+        .force('link',      d3.forceLink(edges).id(d => d.id).distance(165))
+        .force('charge',    d3.forceManyBody().strength(-550))
+        .force('center',    d3.forceCenter(W / 2, H / 2))
+        .force('collision', d3.forceCollide().radius(R + 18))
+        .on('tick', () => {
+          linkLine
+            .attr('x1', d => d.source.x).attr('y1', d => d.source.y)
+            .attr('x2', d => d.target.x).attr('y2', d => d.target.y);
+          linkLabel
+            .attr('x', d => (d.source.x + d.target.x) / 2)
+            .attr('y', d => (d.source.y + d.target.y) / 2);
+          nodeEl.attr('transform', d => `translate(${d.x},${d.y})`);
+        });
+    });
+</script>
+</body>
+</html>
