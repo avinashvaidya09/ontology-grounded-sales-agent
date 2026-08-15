@@ -225,11 +225,6 @@ Large enterprise ontologies have thousands of classes — the full schema never 
 | Schema retrieval | Embed schema fragments, retrieve relevant ones per query (RAG-like) | Large ontologies |
 | Few-shot SPARQL examples | Include 3–5 example question/query pairs | Any size — improves accuracy |
 
-In SAP HANA Cloud KG, data from S/4HANA (via OData/BAPI) is extracted, mapped to RDF
-triples by an ETL pipeline, and loaded into the graph store. The SPARQL endpoint is then
-exposed to agents. The ontology schema acts as the grounding layer — the agent reasons
-over named semantic relationships rather than guessing from column names or API descriptions.
-
 ## Architecture comparison (Stage 7)
 
 ### Pattern A — Prompt + Tool agent (Agent A)
