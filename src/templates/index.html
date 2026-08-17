@@ -388,7 +388,7 @@
       label.textContent = role === 'user' ? 'You' : agentMeta[selectedAgent].label;
       const bubble  = document.createElement('div');
       bubble.className  = 'bubble';
-      bubble.textContent = text;
+      bubble.textContent = text.replace(/\*\*(.*?)\*\*/g, '$1').replace(/\*(.*?)\*/g, '$1');
       wrapper.appendChild(label);
       wrapper.appendChild(bubble);
       messages.appendChild(wrapper);
