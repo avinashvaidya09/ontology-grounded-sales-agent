@@ -276,17 +276,17 @@ OData call at query time.
 
 ### Trade-off table
 
-| Dimension | A — Tool/MCP | B — Ontology-grounded | C — Hybrid |
-|---|---|---|---|
-| Semantic grounding | Weak — schema buried in docstrings | Strong — relationships explicit in ontology | Strong for reference data |
-| Hallucination risk | Low for facts (SPARQL pre-written) | Medium — LLM can write invalid SPARQL | Mixed |
-| Explainability | Medium — tool call is logged, SPARQL hidden | High — generated SPARQL is the reasoning trace | High for KG path |
-| Graph traversal | Only pre-written paths | Any path the ontology defines | Full traversal over KG portion |
-| Cross-domain reasoning | Only if you wrote the join | Natural — KG encodes relationships explicitly | Best |
-| Live / operational data | Yes, if tools call live APIs | No — graph is loaded at startup | Yes — API side is real-time |
-| Freshness | As fresh as the API | Stale — requires ETL to reload | Mixed |
-| Complexity | Low initially; grows with tool count | Medium — requires ontology design upfront | Highest |
-| Maintenance | New concept → new tools + docstrings | New concept → new triples; agents pick it up | Both layers |
+| Dimension | A — Tool/MCP | B — Ontology-grounded |
+|---|---|---|
+| Semantic grounding | Weak — schema buried in docstrings | Strong — relationships explicit in ontology |
+| Hallucination risk | Low for facts (SPARQL pre-written) | Medium — LLM can write invalid SPARQL |
+| Explainability | Medium — tool call is logged, SPARQL hidden | High — generated SPARQL is the reasoning trace |
+| Graph traversal | Only pre-written paths | Any path the ontology defines |
+| Cross-domain reasoning | Only if you wrote the join | Natural — KG encodes relationships explicitly |
+| Live / operational data | Yes, if tools call live APIs | No — graph is loaded at startup |
+| Freshness | As fresh as the API | Stale — requires ETL to reload |
+| Complexity | Low initially; grows with tool count | Medium — requires ontology design upfront |
+| Maintenance | New concept → new tools + docstrings | New concept → new triples; agents pick it up |
 
 ---
 
